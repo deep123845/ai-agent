@@ -4,7 +4,7 @@ from google import genai
 from google.genai import types
 import argparse
 from prompts import system_prompt
-from call_functions import available_functions
+from call_functions import *
 
 
 def main():
@@ -37,10 +37,19 @@ def main():
         print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
         print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
+    function_results = []
     print("Response:")
     if response.function_calls and len(response.function_calls) > 0:
         for function_call in response.function_calls:
-            print(f"Calling function: {function_call.name}({function_call.args})")
+            result = call_function(function_call, args.verbose)
+            if result.parts == None:
+                raise Exception("Function returned no result")
+            if result.parts[0].function_response == None:
+                raise Exception("Function response is invalid")
+            function_results.append(result)
+    if args.verbose:
+        for function_call_result in function_results:
+            print(f"-> {function_call_result.parts[0].function_response.response}")
     print(response.text)
 
 
